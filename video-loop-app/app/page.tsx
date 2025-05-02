@@ -173,24 +173,25 @@ export default function Home() {
   rel="noopener noreferrer"
   style={{
     position: 'fixed',
-    bottom: '30px',
-    right: '30px',
+    bottom: '40px',
+    right: '40px',
     backgroundColor: '#ffffffcc',
     color: '#000',
-    padding: '20px 30px',
-    borderRadius: '16px',
+    padding: '30px 50px',
+    borderRadius: '20px',
     textDecoration: 'none',
     fontWeight: 'bold',
-    fontSize: '20px',
+    fontSize: '28px',
     zIndex: 10000,
-    boxShadow: '0 6px 12px rgba(0,0,0,0.35)',
+    boxShadow: '0 8px 16px rgba(0,0,0,0.4)',
     transition: 'transform 0.2s ease',
   }}
-  onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
+  onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.08)')}
   onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
 >
   Take me to website
 </a>
+
 
       </div>
     </>
