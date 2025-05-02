@@ -1,6 +1,7 @@
 'use client'
 import { useState, useRef, useEffect } from 'react';
 import Head from 'next/head';
+
 function requestFullScreen(elem: HTMLElement) {
   if (elem.requestFullscreen) {
     elem.requestFullscreen();
@@ -32,15 +33,37 @@ export default function Home() {
   };
 
   useEffect(() => {
-    const handleBodyClick = () => {
+    const handleBodyClick = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as HTMLElement;
+      const isLink = target.closest('a');
+    
+      // Ignore clicks on links (like the website button)
+      if (isLink) return;
+    
       if (!hasInteracted) {
         setHasInteracted(true);
-        if (containerRef.current) {
-          requestFullScreen(containerRef.current);
-        }
       }
-      
+    
+      if (containerRef.current) {
+        requestFullScreen(containerRef.current);
+      }
+    
+      if (currentVideo === 1 && videoRef.current) {
+        videoRef.current.pause();
+        videoRef.current.currentTime = 0;
+        videoRef.current.play().catch((err) => {
+          console.warn("Video 1 play failed:", err);
+        });
+      } else if (currentVideo === 2 && secondVideoRef.current) {
+        secondVideoRef.current.pause();
+        secondVideoRef.current.currentTime = 0;
+        secondVideoRef.current.play().catch((err) => {
+          console.warn("Video 2 play failed:", err);
+        });
+      }
     };
+    
+    
 
     document.addEventListener('click', handleBodyClick);
     document.addEventListener('touchstart', handleBodyClick);
@@ -49,7 +72,6 @@ export default function Home() {
     audioMessage.play().catch((e) => {
       console.log("Auto-play error:", e);
     });
-    
 
     return () => {
       document.removeEventListener('click', handleBodyClick);
@@ -72,6 +94,13 @@ export default function Home() {
       });
     }
   }, [currentVideo]);
+
+  useEffect(() => {
+    if (containerRef.current) {
+      // Re-trigger fullscreen when the component is re-rendered or comes back from another view
+      requestFullScreen(containerRef.current);
+    }
+  }, [currentVideo]);  // This ensures fullscreen is triggered when we switch between videos
 
   return (
     <>
@@ -139,26 +168,30 @@ export default function Home() {
 
         {/* Take me to website button */}
         <a
-          href={destinationUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            position: 'fixed',
-            bottom: '20px',
-            right: '20px',
-            backgroundColor: '#ffffffcc',
-            color: '#000',
-            padding: '14px 20px',
-            borderRadius: '12px',
-            textDecoration: 'none',
-            fontWeight: 'bold',
-            fontSize: '16px',
-            zIndex: 10000,
-            boxShadow: '0 4px 8px rgba(0,0,0,0.3)'
-          }}
-        >
-          Take me to website
-        </a>
+  href={destinationUrl}
+  target="_blank"
+  rel="noopener noreferrer"
+  style={{
+    position: 'fixed',
+    bottom: '30px',
+    right: '30px',
+    backgroundColor: '#ffffffcc',
+    color: '#000',
+    padding: '20px 30px',
+    borderRadius: '16px',
+    textDecoration: 'none',
+    fontWeight: 'bold',
+    fontSize: '20px',
+    zIndex: 10000,
+    boxShadow: '0 6px 12px rgba(0,0,0,0.35)',
+    transition: 'transform 0.2s ease',
+  }}
+  onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
+  onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+>
+  Take me to website
+</a>
+
       </div>
     </>
   );
