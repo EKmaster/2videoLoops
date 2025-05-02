@@ -1,134 +1,165 @@
-'use client';
-
-import { useState, useEffect, useRef } from 'react';
+'use client'
+import { useState, useRef, useEffect } from 'react';
+import Head from 'next/head';
+function requestFullScreen(elem: HTMLElement) {
+  if (elem.requestFullscreen) {
+    elem.requestFullscreen();
+  } else if ((elem as unknown as { webkitRequestFullscreen?: () => void }).webkitRequestFullscreen) {
+    (elem as unknown as { webkitRequestFullscreen: () => void }).webkitRequestFullscreen();
+  } else if ((elem as unknown as { mozRequestFullScreen?: () => void }).mozRequestFullScreen) {
+    (elem as unknown as { mozRequestFullScreen: () => void }).mozRequestFullScreen();
+  } else if ((elem as unknown as { msRequestFullscreen?: () => void }).msRequestFullscreen) {
+    (elem as unknown as { msRequestFullscreen: () => void }).msRequestFullscreen();
+  }
+}
 
 export default function Home() {
   const [currentVideo, setCurrentVideo] = useState(1);
-  const [showMessage, setShowMessage] = useState(true);
-  const video1Ref = useRef<HTMLVideoElement | null>(null);
-const video2Ref = useRef<HTMLVideoElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const secondVideoRef = useRef<HTMLVideoElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [hasInteracted, setHasInteracted] = useState(false);
 
-const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // Change this to your desired link
+  const destinationUrl = 'https://www.multanihalwadelights.ca/';
 
-  const websiteUrl = "https://www.multanihalwadelights.com/"; // Replace with your target website URL
-
-  // Function to reset the application state
-  const resetApp = () => {
-    setCurrentVideo(1);
-    setShowMessage(true);
-    
-    if (video1Ref.current) {
-      video1Ref.current.currentTime = 0;
-      video1Ref.current.play();
-    }
-    
-    if (video2Ref.current) {
-      video2Ref.current.currentTime = 0;
-      video2Ref.current.pause();
-    }
-  };
-
-  // Track user activity
-  const resetInactivityTimer = () => {
-    if (inactivityTimerRef.current !== null) {
-      clearTimeout(inactivityTimerRef.current);
-    }
-    
-    inactivityTimerRef.current = setTimeout(() => {
-      resetApp();
-    }, 20000);
-  };
-  
-
-  // Handle video 1 ending
-  const handleVideo1End = () => {
+  const handleFirstVideoEnded = () => {
     setCurrentVideo(2);
-    if (video2Ref.current) {
-      video2Ref.current.play();
-    }
   };
 
-  // Handle video 2 ending
-  const handleVideo2End = () => {
+  const handleSecondVideoEnded = () => {
     setCurrentVideo(1);
-    if (video1Ref.current) {
-      video1Ref.current.play();
-    }
   };
 
-  // Handle message click
-  const handleMessageClick = () => {
-    window.open(websiteUrl, '_blank');
-  };
-
-  // Set up event listeners for user activity
   useEffect(() => {
-    // Initial setup
-    if (video1Ref.current) {
-      video1Ref.current.play();
-    }
-
-    // Set up event listeners
-    const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
-    
-    activityEvents.forEach(event => {
-      window.addEventListener(event, resetInactivityTimer);
-    });
-
-    // Start initial inactivity timer
-    resetInactivityTimer();
-
-    // Clean up event listeners
-    return () => {
-      activityEvents.forEach(event => {
-        window.removeEventListener(event, resetInactivityTimer);
-      });
-      if (inactivityTimerRef.current !== null) {
-        clearTimeout(inactivityTimerRef.current);
+    const handleBodyClick = () => {
+      if (!hasInteracted) {
+        setHasInteracted(true);
+        if (containerRef.current) {
+          requestFullScreen(containerRef.current);
+        }
       }
+      
     };
-  }, []);
+
+    document.addEventListener('click', handleBodyClick);
+    document.addEventListener('touchstart', handleBodyClick);
+
+    const audioMessage = new Audio('/click-for-fullscreen.mp3');
+    audioMessage.play().catch((e) => {
+      console.log("Auto-play error:", e);
+    });
+    
+
+    return () => {
+      document.removeEventListener('click', handleBodyClick);
+      document.removeEventListener('touchstart', handleBodyClick);
+    };
+  }, [hasInteracted]);
+
+  useEffect(() => {
+    if (hasInteracted && videoRef.current && currentVideo === 1) {
+      videoRef.current.play().catch((err) => {
+        console.warn("Video 1 play failed:", err);
+      });
+    }
+  }, [hasInteracted, currentVideo]);
+
+  useEffect(() => {
+    if (currentVideo === 2 && secondVideoRef.current) {
+      secondVideoRef.current.play().catch((err) => {
+        console.warn("Video 2 play failed:", err);
+      });
+    }
+  }, [currentVideo]);
 
   return (
-    <main className="min-h-screen bg-black flex flex-col items-center justify-center">
-      {/* Videos Container */}
-      <div className="flex w-full max-w-6xl justify-center items-center">
-        {/* Video 1 */}
-        <video
-          ref={video1Ref}
-          className={`w-1/2 object-contain transition-opacity duration-500 ${
-            currentVideo === 1 ? 'opacity-100' : 'opacity-0'
-          }`}
-          muted
-          playsInline
-          onEnded={handleVideo1End}
+    <>
+      <Head>
+        <title>Fullscreen Video Player</title>
+        <meta name="description" content="Fullscreen video player with auto-switching" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+      </Head>
+
+      <div 
+        ref={containerRef} 
+        className="video-container"
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          background: 'black',
+          zIndex: 9999
+        }}
+      >
+        {!hasInteracted && (
+          <div className="fullscreen-prompt">
+            <h2>Click anywhere to start</h2>
+            <p>Videos will play in fullscreen</p>
+          </div>
+        )}
+
+        {currentVideo === 1 && (
+          <video
+            key="video1"
+            ref={videoRef}
+            src="/video1.mp4"
+            className="fullscreen-video"
+            playsInline
+            controls={false}
+            muted
+            onEnded={handleFirstVideoEnded}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'contain'
+            }}
+          />
+        )}
+
+        {currentVideo === 2 && (
+          <video
+            key="video2"
+            ref={secondVideoRef}
+            src="/video2.mp4"
+            className="fullscreen-video"
+            playsInline
+            controls={false}
+            muted
+            onEnded={handleSecondVideoEnded}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'contain'
+            }}
+          />
+        )}
+
+        {/* Take me to website button */}
+        <a
+          href={destinationUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            position: 'fixed',
+            bottom: '20px',
+            right: '20px',
+            backgroundColor: '#ffffffcc',
+            color: '#000',
+            padding: '14px 20px',
+            borderRadius: '12px',
+            textDecoration: 'none',
+            fontWeight: 'bold',
+            fontSize: '16px',
+            zIndex: 10000,
+            boxShadow: '0 4px 8px rgba(0,0,0,0.3)'
+          }}
         >
-          <source src="/video1.mp4" type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
-  
-        {/* Video 2 */}
-        <video
-          ref={video2Ref}
-          className={`w-1/2 object-contain transition-opacity duration-500 ${
-            currentVideo === 2 ? 'opacity-100' : 'opacity-0'
-          }`}
-          muted
-          playsInline
-          onEnded={handleVideo2End}
-        >
-          <source src="/video2.mp4" type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
+          Take me to website
+        </a>
       </div>
-  
-      {/* Message Container */}
-      {showMessage && (
-        <div className="mt-8 cursor-pointer text-center" onClick={handleMessageClick}>
-          <h2 className="text-4xl text-cyan-600 underline">Click Here to Visit Our Website</h2>
-        </div>
-      )}
-    </main>
+    </>
   );
-  
 }
