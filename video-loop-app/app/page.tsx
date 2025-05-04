@@ -22,7 +22,6 @@ export default function Home() {
   const [hasInteracted, setHasInteracted] = useState(false);
 
   // Change this to your desired link
-  const destinationUrl = 'https://www.multanihalwadelights.ca/';
 
   const handleFirstVideoEnded = () => {
     setCurrentVideo(2);
@@ -167,30 +166,60 @@ export default function Home() {
         )}
 
         {/* Take me to website button */}
-        <a
-  href={destinationUrl}
-  target="_blank"
-  rel="noopener noreferrer"
-  style={{
-    position: 'fixed',
-    bottom: '40px',
-    right: '40px',
-    backgroundColor: '#ffffffcc',
-    color: '#000',
-    padding: '30px 50px',
-    borderRadius: '20px',
-    textDecoration: 'none',
-    fontWeight: 'bold',
-    fontSize: '28px',
-    zIndex: 10000,
-    boxShadow: '0 8px 16px rgba(0,0,0,0.4)',
-    transition: 'transform 0.2s ease',
-  }}
-  onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.08)')}
-  onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
->
-  Take me to website
-</a>
+        <>
+  {/* Bottom Left Button */}
+  <a
+    href="https://www.torontochocolate.ca/"
+    target="_blank"
+    rel="noopener noreferrer"
+    style={{
+      position: 'fixed',
+      bottom: '40px',
+      left: '40px',
+      backgroundColor: '#8B4513', // brown
+      color: '#fff',
+      padding: '30px 60px',
+      borderRadius: '20px',
+      textDecoration: 'none',
+      fontWeight: 'bold',
+      fontSize: '28px',
+      boxShadow: '0 8px 16px rgba(0,0,0,0.4)',
+      zIndex: 10000,
+      transition: 'transform 0.2s ease',
+    }}
+    onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.08)')}
+    onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+  >
+    Visit Toronto Chocolate Website
+  </a>
+
+  {/* Bottom Right Button */}
+  <a
+    href="https://www.multanihalwadelights.com/"
+    target="_blank"
+    rel="noopener noreferrer"
+    style={{
+      position: 'fixed',
+      bottom: '40px',
+      right: '40px',
+      backgroundColor: '#870000', // red
+      color: '#fff',
+      padding: '30px 60px',
+      borderRadius: '20px',
+      textDecoration: 'none',
+      fontWeight: 'bold',
+      fontSize: '28px',
+      boxShadow: '0 8px 16px rgba(0,0,0,0.4)',
+      zIndex: 10000,
+      transition: 'transform 0.2s ease',
+    }}
+    onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.08)')}
+    onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+  >
+    Visit Multani Halwa Website
+  </a>
+</>
+
 
 
       </div>
