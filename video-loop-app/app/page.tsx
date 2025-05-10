@@ -137,7 +137,7 @@ export default function Home() {
             className="fullscreen-video"
             playsInline
             controls={false}
-            muted
+            
             onEnded={handleFirstVideoEnded}
             style={{
               width: '100%',
@@ -155,7 +155,7 @@ export default function Home() {
             className="fullscreen-video"
             playsInline
             controls={false}
-            muted
+            
             onEnded={handleSecondVideoEnded}
             style={{
               width: '100%',
