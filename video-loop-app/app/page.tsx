@@ -1,87 +1,85 @@
-'use client'
-import { useState, useRef, useEffect } from 'react';
+'use client';
+import { useRef, useState, useEffect } from 'react';
 import Head from 'next/head';
 
-function requestFullScreen(elem: HTMLElement) {
-  if (elem.requestFullscreen) {
-    elem.requestFullscreen();
-  } else if ((elem as any).webkitRequestFullscreen) {
-    (elem as any).webkitRequestFullscreen();
-  } else if ((elem as any).mozRequestFullScreen) {
-    (elem as any).mozRequestFullScreen();
-  } else if ((elem as any).msRequestFullscreen) {
-    (elem as any).msRequestFullscreen();
-  }
-}
-
 export default function Home() {
-  const [videoURLs, setVideoURLs] = useState<(string | null)[]>([null, null]);
-  const [currentVideo, setCurrentVideo] = useState<0 | 1>(0);
   const [hasInteracted, setHasInteracted] = useState(false);
-
+  const [videoURL, setVideoURL] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const handleFilesSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length >= 2) {
-      const urls = [URL.createObjectURL(files[0]), URL.createObjectURL(files[1])];
-      setVideoURLs(urls);
-      setCurrentVideo(0);
+  const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setVideoURL(url);
     }
   };
 
-  const handleVideoEnded = () => {
-    setCurrentVideo((prev) => (prev === 0 ? 1 : 0));
+  const toggleFullscreen = () => {
+    if (videoRef.current) {
+      const videoEl = videoRef.current;
+      if (!document.fullscreenElement) {
+        videoEl.requestFullscreen().catch((err) => {
+          console.warn('Fullscreen request failed:', err);
+        });
+      } else {
+        document.exitFullscreen().catch((err) => {
+          console.warn('Exiting fullscreen failed:', err);
+        });
+      }
+    }
   };
 
   useEffect(() => {
-    const handleInteraction = (event: MouseEvent | TouchEvent) => {
+    const handleBodyClick = (event: MouseEvent | TouchEvent) => {
       const target = event.target as HTMLElement;
-      if (target.closest('a')) return;
+      const isLink = target.closest('a');
+      if (isLink) return;
 
       if (!hasInteracted) {
         setHasInteracted(true);
-        if (containerRef.current) {
-          requestFullScreen(containerRef.current);
-        }
       }
 
-      const ref = videoRef.current;
-      if (ref && videoURLs[0] && videoURLs[1]) {
-        ref.pause();
-        ref.currentTime = 0;
-        ref.play().catch((err) => console.warn("Video play error:", err));
+      if (videoRef.current) {
+        videoRef.current.pause();
+        videoRef.current.currentTime = 0;
+        videoRef.current.play().catch((err) => {
+          console.warn('Video play failed:', err);
+        });
       }
     };
 
-    document.addEventListener('click', handleInteraction);
-    document.addEventListener('touchstart', handleInteraction);
+    document.addEventListener('click', handleBodyClick);
+    document.addEventListener('touchstart', handleBodyClick);
+
+    const audioMessage = new Audio('/click-for-fullscreen.mp3');
+    audioMessage.play().catch((e) => {
+      console.log('Auto-play error:', e);
+    });
 
     return () => {
-      document.removeEventListener('click', handleInteraction);
-      document.removeEventListener('touchstart', handleInteraction);
+      document.removeEventListener('click', handleBodyClick);
+      document.removeEventListener('touchstart', handleBodyClick);
     };
-  }, [hasInteracted, videoURLs]);
+  }, [hasInteracted]);
 
   useEffect(() => {
-    if (videoRef.current && videoURLs[0] && videoURLs[1]) {
-      videoRef.current.src = videoURLs[currentVideo]!;
-      videoRef.current.play().catch((err) => console.warn("Video play error:", err));
+    if (hasInteracted && videoRef.current && videoURL) {
+      videoRef.current.play().catch((err) => {
+        console.warn('Video play failed:', err);
+      });
     }
-  }, [currentVideo, videoURLs]);
+  }, [hasInteracted, videoURL]);
 
   return (
     <>
       <Head>
-        <title>Upload & Loop Videos</title>
-        <meta name="description" content="User-uploaded fullscreen looping videos" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Video Upload Viewer</title>
+        <meta name="description" content="Play uploaded video without fullscreen" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
       </Head>
 
       <div
-        ref={containerRef}
         className="video-container"
         style={{
           position: 'fixed',
@@ -93,40 +91,27 @@ export default function Home() {
           zIndex: 9999,
         }}
       >
-        {!videoURLs[0] || !videoURLs[1] ? (
-          <div style={{
-            color: 'white',
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            textAlign: 'center'
-          }}>
-            <h2>Upload Two Videos to Start</h2>
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              style={{
-                backgroundColor: '#444',
-                color: '#fff',
-                padding: '12px 20px',
-                borderRadius: '10px',
-                border: 'none',
-                cursor: 'pointer',
-                marginTop: '20px'
-              }}
-            >
-              Upload Videos
-            </button>
+        {!videoURL && (
+          <div
+            style={{
+              color: 'white',
+              textAlign: 'center',
+              paddingTop: '40vh',
+            }}
+          >
+            <h2>Upload Combined Video</h2>
+            <input type="file" accept="video/*" onChange={handleVideoUpload} />
           </div>
-        ) : (
+        )}
+
+        {videoURL && (
           <video
             ref={videoRef}
-            key={currentVideo}
+            src={videoURL}
             className="fullscreen-video"
-            src={videoURLs[currentVideo]!}
             playsInline
+            loop 
             controls={false}
-            onEnded={handleVideoEnded}
             style={{
               width: '100%',
               height: '100%',
@@ -135,16 +120,32 @@ export default function Home() {
           />
         )}
 
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="video/*"
-          multiple
-          onChange={handleFilesSelected}
-          style={{ display: 'none' }}
-        />
+        {/* Fullscreen Button */}
+        {videoURL && (
+          <button
+            onClick={toggleFullscreen}
+            style={{
+              position: 'fixed',
+              bottom: '20px',
+              right: '20px',
+              backgroundColor: '#333',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '50%',
+              width: '40px',
+              height: '40px',
+              fontSize: '18px',
+              cursor: 'pointer',
+              boxShadow: '0 4px 6px rgba(0,0,0,0.2)',
+              zIndex: 10001,
+            }}
+            title="Toggle Fullscreen"
+          >
+            ⛶
+          </button>
+        )}
 
-        {/* External links (optional) */}
+        {/* Visit Buttons */}
         <a
           href="https://www.torontochocolate.ca/"
           target="_blank"
@@ -160,11 +161,14 @@ export default function Home() {
             textDecoration: 'none',
             fontWeight: 'bold',
             fontSize: '16px',
+            boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
             zIndex: 10000,
             transition: 'transform 0.2s ease',
           }}
+          onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
+          onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
         >
-          Visit Toronto Chocolate
+          Visit Toronto Chocolate Website
         </a>
 
         <a
@@ -182,11 +186,14 @@ export default function Home() {
             textDecoration: 'none',
             fontWeight: 'bold',
             fontSize: '16px',
+            boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
             zIndex: 10000,
             transition: 'transform 0.2s ease',
           }}
+          onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
+          onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
         >
-          Visit Multani Halwa
+          Visit Multani Halwa Website
         </a>
       </div>
     </>
